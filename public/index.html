@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Diário de Hábitos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #12121d);
+            color: #f0f0f0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .form-container {
+            max-width: 500px;
+            margin: auto;
+            background: #2a2a3c;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        .form-control {
+            background-color: #1f1f2e;
+            color: #f0f0f0;
+            border: 1px solid #444;
+            border-radius: 10px;
+        }
+
+        .form-control::placeholder {
+            color: #aaa;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+            border-color: #3399ff;
+        }
+
+        .btn-primary {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 12px;
+            background-color: #3399ff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #1c7ed6;
+        }
+
+        #status {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-4">
+        <div class="form-container">
+            <h2 class="text-center mb-4 text-info">🌙 Diário de Hábitos</h2>
+            <form id="habitsForm" class="row g-3">
+                <div class="col-12"><input class="form-control" placeholder="Café da Manhã" name="Café da Manhã"></div>
+                <div class="col-12"><input class="form-control" placeholder="Lanche da Manhã" name="Lanche da Manhã">
+                </div>
+                <div class="col-12"><input class="form-control" placeholder="Almoço" name="Almoço"></div>
+                <div class="col-12"><input class="form-control" placeholder="Lanche da Tarde" name="Lanche da Tarde">
+                </div>
+                <div class="col-12"><input class="form-control" placeholder="Jantar" name="Jantar"></div>
+                <div class="col-12"><input class="form-control" placeholder="Ceia" name="Ceia"></div>
+                <div class="col-12"><input class="form-control" placeholder="Treinou?" name="Treinou"></div>
+                <div class="col-12"><input class="form-control" placeholder="Descansou?" name="Descansou"></div>
+                <div class="col-12"><input class="form-control" placeholder="Caminhou?" name="Caminhou"></div>
+                <div class="col-12"><input class="form-control" placeholder="Garrafas 500ml" name="Garrafas"></div>
+                <div class="col-12"><input class="form-control" placeholder="Dificuldades" name="Dificuldades"></div>
+                <div class="col-12"><input class="form-control" placeholder="Vitórias" name="Vitórias"></div>
+                <div class="col-12"><input class="form-control" placeholder="Perdas" name="Perdas"></div>
+                <div class="col-12 d-grid">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+                <div class="col-12 d-grid">
+                    <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
+                        data-bs-target="#exportModal">
+                        Exportar Dados
+                    </button>
+                </div>
+                <div class="col-12 d-grid">
+                    <button type="button" class="btn btn-danger mt-2" id="limparHistorico">
+                        Limpar Histórico
+                    </button>
+                </div>
+                <div id="status" class="text-center mt-3 text-success"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">Selecionar Dias para Exportar</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="exportForm" class="form-check" style="max-height: 300px; overflow-y: auto;"></form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" id="exportarSelecionados">Exportar
+                        Selecionados</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const form = document.getElementById('habitsForm');
+        const statusDiv = document.getElementById('status');
+        const exportForm = document.getElementById('exportForm');
+
+        const STORAGE_KEY = 'habitos-diarios';
+
+        // Salva os dados por data
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dados = Object.fromEntries(new FormData(form).entries());
+            const hoje = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+                .toISOString()
+                .split('T')[0];
+            dados.data = hoje;
+
+            let historico = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            historico[hoje] = dados;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(historico));
+
+            form.reset();
+            statusDiv.textContent = '✅ Dados salvos!';
+        });
+
+        // Preenche modal com checkboxes
+        document.getElementById('exportModal').addEventListener('show.bs.modal', () => {
+            const historico = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            exportForm.innerHTML = '';
+            Object.keys(historico).forEach(data => {
+                exportForm.innerHTML += `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="${data}" id="dia-${data}">
+            <label class="form-check-label" for="dia-${data}">${data}</label>
+          </div>
+        `;
+            });
+        });
+
+        // Exporta os dias selecionados
+        document.getElementById('exportarSelecionados').addEventListener('click', () => {
+            const historico = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const selecionados = Array.from(document.querySelectorAll('#exportForm input:checked')).map(cb => cb.value);
+            const exportar = {};
+            selecionados.forEach(dia => {
+                if (historico[dia]) exportar[dia] = historico[dia];
+            });
+
+            const blob = new Blob([JSON.stringify(exportar, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'habitos-exportados.json';
+            link.click();
+        });
+        document.getElementById('limparHistorico').addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja apagar todos os dados salvos?')) {
+                localStorage.removeItem('habitos-diarios');
+                alert('Histórico apagado!');
+            }
+        });
+    </script>
+</body>
+
+</html>
